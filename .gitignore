@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+.venv/
+
+# Video files lớn (nên dùng VIDEO_URL thay vì commit file nặng vào git)
+*.mp4
+*.mkv
+*.mov
+*.ts
+*.flv
+
+# Logs
+*.log

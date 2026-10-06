@@ -1,0 +1,69 @@
+# 🔴 YOUTUBE LIVE STREAM TRÊN RENDER.COM (24/7 AUTO RECONNECT)
+
+Dự án phát Live Stream YouTube tự động 24/7 chạy trên nền tảng Cloud [Render.com](https://dashboard.render.com/) bằng Docker, FFmpeg và Python Web Dashboard.
+
+---
+
+## 🧰 1. TÀI NGUYÊN CẦN CHUẨN BỊ
+
+1. **Tài khoản Render**: Đăng ký tại [dashboard.render.com](https://dashboard.render.com/) (liên kết với GitHub/GitLab).
+2. **Kho mã nguồn (GitHub Repo)**: Tạo 1 repository GitHub mới (Private hoặc Public) để chứa thư mục này.
+3. **Mã luồng YouTube (Stream Key)**:
+   - Vào [YouTube Studio Live](https://studio.youtube.com/channel/UC/livestreaming).
+   - Copy **Khóa phát trực tiếp (Stream Key)**.
+4. **Nguồn Video phát Live**:
+   - **Cách 1 (Khuyên dùng)**: Upload video lên Cloudflare R2 / Google Drive Direct / Dropbox / máy chủ web và lấy direct link -> điền vào biến `VIDEO_URL`.
+   - **Cách 2**: Đặt file `video.mp4` trực tiếp vào thư mục này trước khi build Docker (nếu video nhẹ < 100MB).
+
+---
+
+## 🚀 2. HƯỚNG DẪN TRIỂN KHAI LÊN RENDER (3 BƯỚC)
+
+### Bước 1: Đẩy mã nguồn lên GitHub
+Mở PowerShell tại thư mục `D:\Test_script\render_youtube_live` và chạy:
+```powershell
+git init
+git add .
+git commit -m "Initial commit for Render YouTube Live"
+git branch -M main
+git remote add origin https://github.com/<tai-khoan-cua-ban>/<ten-repo>.git
+git push -u origin main
+```
+
+---
+
+### Bước 2: Tạo Web Service trên Render Dashboard
+1. Truy cập [dashboard.render.com](https://dashboard.render.com/).
+2. Nhấn nút **New +** ở góc trên bên phải -> Chọn **Web Service**.
+3. Chọn kho GitHub bạn vừa tạo ở Bước 1.
+4. Cấu hình cơ bản:
+   - **Name**: `youtube-live-stream` (hoặc tên tùy thích).
+   - **Region**: `Singapore` (độ trễ thấp, kết nối YouTube nhanh) hoặc `Oregon`.
+   - **Runtime**: `Docker`.
+   - **Instance Type**: `Free` (hoặc `Starter` nếu muốn chạy tải nặng).
+5. Cuộn xuống mục **Environment Variables** -> Thêm các biến sau:
+   - `YOUTUBE_STREAM_KEY` = `xxxx-xxxx-xxxx-xxxx-xxxx` (Stream Key của bạn từ YouTube Studio).
+   - `VIDEO_URL` = `https://link-truc-tiep-den-video.mp4` (Link file video nếu không bundle trong code).
+   - `RTMP_URL` = `rtmp://a.rtmp.youtube.com/live2` (Mặc định).
+6. Nhấn **Create Web Service**.
+
+---
+
+### Bước 3: Giữ Stream 24/7 (Đối với Free Plan)
+Gói Free của Render sẽ tự động ngủ (sleep) sau 15 phút nếu không có lượt truy cập web. Để giữ luồng live chạy liên tục:
+1. Lấy URL của Web Service trên Render (ví dụ: `https://youtube-live-stream.onrender.com`).
+2. Vào [UptimeRobot.com](https://uptimerobot.com) (miễn phí).
+3. Tạo một Monitor mới:
+   - **Monitor Type**: `HTTP(s)`
+   - **Friendly Name**: `Render Live Keep-Alive`
+   - **URL**: `https://youtube-live-stream.onrender.com/health`
+   - **Monitoring Interval**: `5 minutes`
+4. Render sẽ luôn được đánh thức và giữ kết nối live stream không bị ngắt.
+
+---
+
+## 📊 3. TÍNH NĂNG TÍCH HỢP
+
+- **Web Dashboard thời gian thực**: Xem trực tiếp trạng thái phát live, thời gian chạy, số lần tự động kết nối lại (reconnect), CPU/RAM.
+- **Chuẩn âm thanh chống ngắt**: FFmpeg stream loop vô tận với video stream copy (`-c:v copy`) + audio re-encode nhẹ AAC 48k (`-c:a aac -b:a 128k -ar 48000`) triệt tiêu lỗi Non-monotonous DTS ở mối nối lặp.
+- **Bảo mật tuyệt đối**: Stream key được quản lý qua Environment Variable, không lộ ra ngoài log công khai.

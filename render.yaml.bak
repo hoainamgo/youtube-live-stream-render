@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: youtube-live-stream
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: YOUTUBE_STREAM_KEY
+        sync: false
+      - key: RTMP_URL
+        value: rtmp://a.rtmp.youtube.com/live2
+      - key: VIDEO_URL
+        sync: false
+      - key: LOCAL_VIDEO_PATH
+        value: video.mp4
+      - key: PORT
+        value: "10000"
